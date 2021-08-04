@@ -129,7 +129,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
 			// Send the received data.
 			//HAL_UART_Transmit(&huart2, &rx_data, 1, 10);
 
-			HAL_GPIO_WritePin(GPIOC, GPIO_PIN_7, 1); // LED GREEN ON
+			HAL_GPIO_WritePin(GPIOC, GPIO_PIN_7, 1); // LED YELLOW ON
 			//HAL_GPIO_WritePin(GPIOC, GPIO_PIN_9, 1); // GPIO OUTPUT HIGH
 			/*
 			if (rx_data == 0x33){

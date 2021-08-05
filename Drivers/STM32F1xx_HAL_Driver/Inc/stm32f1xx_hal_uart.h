@@ -316,7 +316,6 @@ typedef  void (*pUART_RxEventCallbackTypeDef)(struct __UART_HandleTypeDef *huart
   * @{
   */
 #define UART_OVERSAMPLING_16                    0x00000000U
-#define UART_OVERSAMPLING_8                     ((uint32_t)USART_CR1_OVER8)
 #if defined(USART_CR1_OVER8)
 #define UART_OVERSAMPLING_8                     ((uint32_t)USART_CR1_OVER8)
 #endif /* USART_CR1_OVER8 */

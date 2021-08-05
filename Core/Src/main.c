@@ -86,11 +86,17 @@ static void MX_NVIC_Init(void);
 
 /*############################################################################*/
 /*gto variables*/
+char * strcpy_slice(char *buf, char *s, int start, int size);
 
 uint8_t 	data[1] = "S";				//uart1 test send data
 uint8_t 	spi_data[] = "1";			//spi1 test send data
 uint8_t 	uart1_4M = 0x11;	//uart1 4Mbps test send data
 uint8_t 	rx_data;
+
+// slsve ID
+uint8_t		s_ID[2];	// Save Slave ID
+//uint8_t		compare_ID[2] = "00";	// Save Slave ID
+
 
 /*mslee state machine variables*/
 #define   	START_CODE	 		'<'
@@ -104,6 +110,8 @@ uint8_t   	status = START;
 uint8_t   	rx_cnt;
 uint8_t		rxdata;
 uint8_t		data_receive_flag = 0;
+
+uint8_t		uart1_key_Flag = 0;
 uint8_t		uart2_key_Flag = 0;
 
 /*############################################################################*/
@@ -113,12 +121,24 @@ uint8_t		uart2_key_Flag = 0;
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
 	if (huart->Instance == USART1) {
-			//debugPrintln(&huart1, "uart1 interrupt! ");
 	        // When one data is received, an interrupt is generated.
+			//HAL_GPIO_WritePin(GPIOB, SYNC_EN, 0); 							// GPIO PB14 OUTPUT LOW -> SYNC_EN
+
 			HAL_UART_Receive_IT(&huart1, &rx_data, 1);
 
 	        // Send the received data.
 			HAL_UART_Transmit(&huart1, &rx_data, 1, 10);
+
+			uart1_key_Flag = 1;
+
+			/*
+			HAL_GPIO_WritePin(GPIOB, STM_TX_EN, 1); 					// GPIO PB14 OUTPUT HIGH -> SYNC_EN
+			HAL_UART_Transmit(&huart1, &rx_data, 1, 10);
+			DWT_Delay_us(20);
+			HAL_GPIO_WritePin(GPIOB, STM_TX_EN, 0); 					// GPIO PB14 OUTPUT LOW -> SYNC_EN
+			HAL_GPIO_WritePin(GPIOC, GPIO_PIN_9, 0); // LED RED OFF
+			*/
+
 	}
 
 	if (huart->Instance == USART2) {
@@ -127,21 +147,11 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
 			HAL_UART_Receive_IT(&huart2, &rxdata, 1);
 
 			// Send the received data.
-			//HAL_UART_Transmit(&huart2, &rx_data, 1, 10);
+			//HAL_UART_Transmit(&huart2, &rxdata, 1, 10);
 
-			HAL_GPIO_WritePin(GPIOC, GPIO_PIN_7, 1); // LED YELLOW ON
-			//HAL_GPIO_WritePin(GPIOC, GPIO_PIN_9, 1); // GPIO OUTPUT HIGH
-			/*
-			if (rx_data == 0x33){
-				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_7, 1); // GPIO OUTPUT HIGH
-				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_9, 1); // GPIO OUTPUT HIGH
-			}
 
-			if (rx_data == 0x11){
-				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_7, 0); // GPIO OUTPUT LOW
-				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_9, 0); // GPIO OUTPUT LOW
-			}
-			*/
+			HAL_GPIO_WritePin(GPIOC, GPIO_PIN_7, 1); 							// LED YELLOW ON
+
 
 			switch(status){
 
@@ -245,14 +255,16 @@ int main(void)
   /* Initialize interrupts */
   MX_NVIC_Init();
   /* USER CODE BEGIN 2 */
-  HAL_GPIO_WritePin(GPIOB, SYNC_EN, 1); // GPIO PB14 OUTPUT HIGH -> SYNC_EN
-  HAL_GPIO_WritePin(GPIOB, STM_TX_EN, 0); // GPIO PB14 OUTPUT HIGH -> SYNC_EN
+  HAL_GPIO_WritePin(GPIOB, SYNC_EN, 1); 							// GPIO PB14 OUTPUT HIGH -> SYNC_EN
+  HAL_GPIO_WritePin(GPIOB, STM_TX_EN, 0); 							// GPIO PB14 OUTPUT LOWH -> SYNC_EN
+
   printf("\r\n ### START STM32F105 Slave Board ### \r\n");
-  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_9, 1); // LED RED ON
 
-  HAL_UART_Receive_IT(&huart2, (uint8_t *) &rxdata, 1); // interrupt uart 2
+  /*receive Interrupt*/
+  HAL_UART_Receive_IT(&huart1, (uint8_t *) &rx_data, 1);
+  HAL_UART_Receive_IT(&huart2, (uint8_t *) &rxdata, 1); 			// interrupt uart 2
 
-  //HAL_UART_Receive_IT(&huart1, &rx_data, 1);
+
 
   //HAL_GPIO_WritePin(GPIOC, GPIO_PIN_7, 1); // GPIO OUTPUT HIGH
   //HAL_GPIO_WritePin(GPIOC, GPIO_PIN_9, 1); // GPIO OUTPUT HIGH
@@ -263,26 +275,51 @@ int main(void)
 
   while (1)
   {
-	HAL_UART_Transmit(&huart1, (uint8_t *)&uart1_4M, 2, 10);
+	//HAL_UART_Transmit(&huart1, (uint8_t *)&uart1_4M, 2, 10);
 	//DWT_Delay_us(1000000);
+
+	HAL_GPIO_WritePin(GPIOB, SYNC_EN, 0); 							// GPIO PB14 OUTPUT HIGH -> SYNC_EN
+	HAL_Delay(1);
+	HAL_GPIO_WritePin(GPIOB, SYNC_EN, 1); 							// GPIO PB14 OUTPUT HIGH -> SYNC_EN
+	HAL_Delay(1);
 
 	if(uart2_key_Flag)
 	{
 		  uart2_key_Flag = 0;
-		  printf("uart2 flag on \r\n");
-
-		  //HAL_GPIO_WritePin(GPIOC, GPIO_PIN_7, 1); // GPIO OUTPUT HIGH
-
-		  /*
-		  if (LENGTH == 16){
-			  HAL_UART_Transmit(&huart2, (uint8_t *) &rxd[i], 1, 10);
-		  }
-		  */
+		  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_9, 1);							// LED RED ON
 
 		  for (int i = 0; i < LENGTH; i++) {
 			  HAL_UART_Transmit(&huart2, (uint8_t *) &rxd[i], 1, 10);
 		  }
 
+		  /*
+		  strcpy_slice(s_ID, rxd, 5, 2);	// slice from message "[RID=?? SLAVE ANCHOR DEVICE]" 5, 2byte
+
+		  if (s_ID == "00"){
+
+		  }*/
+
+		  HAL_GPIO_WritePin(GPIOB, SYNC_EN, 0); 							// GPIO PB14 OUTPUT LOW -> SYNC_EN
+
+		  /*Configure GPIO pins : PA2 PA3 */	//gto
+		  //change uart2 port to gpio
+
+		  GPIO_InitTypeDef GPIO_InitStruct = {0};
+		  GPIO_InitStruct.Pin = GPIO_PIN_2|GPIO_PIN_3;
+		  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+		  GPIO_InitStruct.Pull = GPIO_NOPULL;
+		  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+	}
+
+	if(uart1_key_Flag){
+		  uart1_key_Flag = 0;
+		  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_9, 0); 							// GPIO RED OFF
+
+		  HAL_GPIO_WritePin(GPIOB, STM_TX_EN, 1);
+		  //DWT_Delay_us(20);
+		  HAL_UART_Transmit(&huart1, (uint8_t *)&uart1_4M, 1, 10);
+		  //DWT_Delay_us(20);
+		  HAL_GPIO_WritePin(GPIOB, STM_TX_EN, 0);
 	}
 
     /* USER CODE END WHILE */
@@ -407,13 +444,13 @@ static void MX_USART1_UART_Init(void)
 #if 0
   /* USER CODE END USART1_Init 1 */
   huart1.Instance = USART1;
-  huart1.Init.BaudRate = 115200;	//7000000; 4Mbps
+  huart1.Init.BaudRate = 115200;
   huart1.Init.WordLength = UART_WORDLENGTH_8B;
   huart1.Init.StopBits = UART_STOPBITS_1;
   huart1.Init.Parity = UART_PARITY_NONE;
   huart1.Init.Mode = UART_MODE_TX_RX;
   huart1.Init.HwFlowCtl = UART_HWCONTROL_NONE;
-  huart1.Init.OverSampling = UART_OVERSAMPLING_16;	// UART_OVERSAMPLING_8;
+  huart1.Init.OverSampling = UART_OVERSAMPLING_16;
   if (HAL_UART_Init(&huart1) != HAL_OK)
   {
     Error_Handler();
@@ -421,13 +458,13 @@ static void MX_USART1_UART_Init(void)
   /* USER CODE BEGIN USART1_Init 2 */
 #endif
   huart1.Instance = USART1;
-  huart1.Init.BaudRate = 7000000; //115200;
+  huart1.Init.BaudRate = 4000000; //7000000; //115200;
   huart1.Init.WordLength = UART_WORDLENGTH_8B;
   huart1.Init.StopBits = UART_STOPBITS_1;
   huart1.Init.Parity = UART_PARITY_NONE;
   huart1.Init.Mode = UART_MODE_TX_RX;
   huart1.Init.HwFlowCtl = UART_HWCONTROL_NONE;
-  huart1.Init.OverSampling = UART_OVERSAMPLING_8;
+  huart1.Init.OverSampling = UART_OVERSAMPLING_8;	//UART_OVERSAMPLING_16;	//UART_OVERSAMPLING_8;
 
   if (HAL_UART_Init(&huart1) != HAL_OK)
   {
@@ -486,12 +523,16 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOC_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12|GPIO_PIN_14, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOC, GPIO_PIN_7|GPIO_PIN_9, GPIO_PIN_RESET);
 
   /*Configure GPIO pins : PB12 PB14 */
   GPIO_InitStruct.Pin = GPIO_PIN_12|GPIO_PIN_14;
-  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /*Configure GPIO pins : PC7 PC9 */
@@ -504,7 +545,17 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+char * strcpy_slice(char *buf, char *s, int start, int size)
+{
+  if (strlen(s) > start) {
+    s += start;   // 시작 위치로 변경
+    while (size-- > 0 && *s != '\0')   // size가 0보다 크고, 문자열 끝이 지나지 않은 경우
+      *(buf++) = *(s++);   // 복사
+    *buf = '\0';    // 끝에 널 문자 처리
+  }
 
+  return buf;
+}
 /* USER CODE END 4 */
 
 /**

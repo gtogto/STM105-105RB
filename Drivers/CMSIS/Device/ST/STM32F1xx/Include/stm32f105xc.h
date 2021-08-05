@@ -9,7 +9,7 @@
   *          This file contains:
   *           - Data structures and the address mapping for all peripherals
   *           - Peripheral's registers declarations and bits definition
-  *           - Macros to access peripheralï¿½s registers hardware
+  *           - Macros to access peripheral’s registers hardware
   *  
   ******************************************************************************
   * @attention
@@ -12237,9 +12237,6 @@ typedef struct
 #define USART_CR1_UE_Pos                    (13U)                              
 #define USART_CR1_UE_Msk                    (0x1UL << USART_CR1_UE_Pos)         /*!< 0x00002000 */
 #define USART_CR1_UE                        USART_CR1_UE_Msk                   /*!< USART Enable */
-#define USART_CR1_OVER8_Pos           		(15U)
-#define USART_CR1_OVER8_Msk           		(0x1UL << USART_CR1_OVER8_Pos)     /*!< 0x00008000 */
-#define USART_CR1_OVER8               		USART_CR1_OVER8_Msk                /*!<USART Oversampling by 8 enable */
 
 /******************  Bit definition for USART_CR2 register  *******************/
 #define USART_CR2_ADD_Pos                   (0U)                               

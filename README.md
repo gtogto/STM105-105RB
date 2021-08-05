@@ -3,7 +3,7 @@ STM105-105RB
 
 ## Screenshot
 ### Bridge Test (20210805)
-<img src=https://user-images.githubusercontent.com/30851459/128109521-c04bc81c-bfda-4f1c-8dc2-4c071a2a25b4.png>
+<img src=https://user-images.githubusercontent.com/30851459/128328242-b7aa54ab-179d-4eda-b1e5-a13454c90e4a.png>
 
 
 By. gto

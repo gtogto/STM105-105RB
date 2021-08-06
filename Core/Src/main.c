@@ -89,9 +89,14 @@ static void MX_NVIC_Init(void);
 char * strcpy_slice(char *buf, char *s, int start, int size);
 
 uint8_t 	data[1] = "S";				//uart1 test send data
+uint8_t 	to407[11] = "(123456789)";		//uart1 test send data
 uint8_t 	spi_data[] = "1";			//spi1 test send data
-uint8_t 	uart1_4M = 0x11;	//uart1 4Mbps test send data
+uint8_t 	uart1_4M = 0x11;			//uart1 4Mbps test send data
 uint8_t 	rx_data;
+
+uint8_t test_data[] = { 0 , 0 };
+uint8_t test_data1[] = { 5 , 0 };
+
 
 // slsve ID
 uint8_t		s_ID[2];	// Save Slave ID
@@ -149,8 +154,6 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
 			// Send the received data.
 			//HAL_UART_Transmit(&huart2, &rxdata, 1, 10);
 
-
-			HAL_GPIO_WritePin(GPIOC, GPIO_PIN_7, 1); 							// LED YELLOW ON
 
 
 			switch(status){
@@ -278,15 +281,10 @@ int main(void)
 	//HAL_UART_Transmit(&huart1, (uint8_t *)&uart1_4M, 2, 10);
 	//DWT_Delay_us(1000000);
 
-	HAL_GPIO_WritePin(GPIOB, SYNC_EN, 0); 							// GPIO PB14 OUTPUT HIGH -> SYNC_EN
-	HAL_Delay(1);
-	HAL_GPIO_WritePin(GPIOB, SYNC_EN, 1); 							// GPIO PB14 OUTPUT HIGH -> SYNC_EN
-	HAL_Delay(1);
-
 	if(uart2_key_Flag)
 	{
 		  uart2_key_Flag = 0;
-		  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_9, 1);							// LED RED ON
+		  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_7, 1);							// LED RED ON
 
 		  for (int i = 0; i < LENGTH; i++) {
 			  HAL_UART_Transmit(&huart2, (uint8_t *) &rxd[i], 1, 10);
@@ -313,13 +311,34 @@ int main(void)
 
 	if(uart1_key_Flag){
 		  uart1_key_Flag = 0;
+
+		  HAL_GPIO_WritePin(GPIOB, STM_TX_EN, 1);
+		  //DWT_Delay_us(20);
+		  HAL_UART_Transmit(&huart1, (uint8_t *) &to407, 11, 100);
+		  //DWT_Delay_us(20);
+		  HAL_GPIO_WritePin(GPIOB, STM_TX_EN, 0);
+
+		  /*
+		  if(rx_data == 0x22){
+			  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_7, 1);							// LED ON
+			  HAL_Delay(1000);
+			  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_7, 0);							// LED OFF
+		  }
+
+		  if(rx_data == 0x33){
+			  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_7, 1);							// LED ON
+			  HAL_Delay(1000);
+			  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_7, 0);							// LED OFF
+		  }*/
+
+		  /*
 		  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_9, 0); 							// GPIO RED OFF
 
 		  HAL_GPIO_WritePin(GPIOB, STM_TX_EN, 1);
 		  //DWT_Delay_us(20);
-		  HAL_UART_Transmit(&huart1, (uint8_t *)&uart1_4M, 1, 10);
+		  HAL_UART_Transmit(&huart1, (uint8_t *) &to407, 6, 10);
 		  //DWT_Delay_us(20);
-		  HAL_GPIO_WritePin(GPIOB, STM_TX_EN, 0);
+		  HAL_GPIO_WritePin(GPIOB, STM_TX_EN, 0);*/
 	}
 
     /* USER CODE END WHILE */
